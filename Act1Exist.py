@@ -26,7 +26,7 @@ def openBD():
 
 
 window = tk.Tk()
-window.geometry("500x500")
+window.geometry("500x820")
 
 lbl_name = tk.Label(master=window,
                       text="BAYO",
@@ -42,7 +42,7 @@ lbl_answer = tk.Text(master=window,
                       foreground="black",
                       background="white",
                       width="50",
-                      height="20",
+                      height="40",
                       )
 lbl_name.pack(pady="10")
 ent_cuerry.pack(pady="5")
