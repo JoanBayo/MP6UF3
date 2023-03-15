@@ -33,35 +33,44 @@ def SalaryEmployersAction():
         lbl_resultatSalary.config(text="Algo ha fallat")
 def ShowEmployersAction():
     try:
-        show = ""
-        dni = ent_Dni.get()
+        dni = ent_DniShow.get()
         query = """for $treballador in //treballador
                         where $treballador/dni = '""" + dni + """'
                         return $treballador"""
 
-        res = db.executeQuery(query)
-        answer = db.getHits(res)
-        for i in range(answer):
-            show = show + str(db.retrieve(res, i)) + '\n'
+        answer = selectQuery(query)
 
         lbl_resultatShow.delete('1.0', tk.END)
-        lbl_resultatShow.insert('1.0', show)
+        lbl_resultatShow.insert('1.0', answer)
 
     except:
         lbl_resultatShow.config(text="Algo ha fallat")
+
+
+def selectQuery(query):
+    try:
+        show = ""
+        res = db.executeQuery(query)
+        hits = db.getHits(res)
+        for i in range(hits):
+            show = show + str(db.retrieve(res, i)) + '\n'
+        return show
+    except:
+        return "Error"
+
 def UpdateEmployersAction():
     try:
-        departament = ent_Department.get()
-        dni = ent_Dni.get()
-        nom = ent_Name.get()
-        cognom = ent_Surname.get()
-        telefon = ent_TelefonNumber.get()
-        mail = ent_Mail.get()
-        sou = ent_Salary.get()
+        departament = ent_DepartmentModifi.get()
+        dni = ent_DniModifi.get()
+        nom = ent_NameModifi.get()
+        cognom = ent_SurnameModifi.get()
+        sou = ent_SalaryModifi.get()
+        telefon = ent_TelefonNumberModifi.get()
+        mail = ent_MailModifi.get()
 
         if checkDni(dni):
-            query = """update replace //treballador[dni='"""+ dni +"""'] 
-                           <treballador>\n 
+            query = """update replace //treballador[dni='"""+ str(dni) +"""'] 
+                        with <treballador>\n 
                                <departament>""" + str(departament) + """</departament>\n
                                <dni>""" + str(dni) + """</dni>\n
                                <nom>""" + nom + """</nom>\n
@@ -69,7 +78,8 @@ def UpdateEmployersAction():
                                <telefon>""" + str(telefon) + """</telefon>\n
                                <mail>""" + mail + """</mail>\n
                                <sou>""" + sou + """</sou>\n
-                       <treballador>"""
+                       </treballador>"""
+            print query
             res = db.executeQuery(query)
 
             if res != 0:
@@ -118,8 +128,9 @@ def checkDni(dni):
     try:
         query = db.executeQuery("""for $dni in //treballador/dni
                                     return $dni/text()""")
+        print query
         answer = db.getHits(query)
-
+        print answer
         for i in range(answer):
             alldni.append(str(db.retrieve(query, i)))
         if dni in alldni:
@@ -144,16 +155,17 @@ def addEmployersAction():
             lbl_resultatAdd.config(text="Ja hi ha un treballador amb aquest DNI")
         else:
             query = """update insert 
-                        <treballador>\n 
-                            <departament>""" + str(departament) + """</departament>\n
-                            <dni>""" + str(dni) + """</dni>\n
-                            <nom>""" + nom + """</nom>\n
-                            <cognom>""" + cognom + """</cognom>\n
-                            <telefon>""" + str(telefon) + """</telefon>\n
-                            <mail>""" + mail + """</mail>\n
-                            <sou>""" + sou + """</sou>\n
-                    <treballador>\n
+                        <treballador> 
+                            <departament>""" + str(departament) + """</departament>
+                            <dni>""" + str(dni) + """</dni>
+                            <nom>""" + nom + """</nom>
+                            <cognom>""" + cognom + """</cognom>
+                            <telefon>""" + str(telefon) + """</telefon>
+                            <mail>""" + mail + """</mail>
+                            <sou>""" + sou + """</sou>
+                    </treballador>
                     into /personal"""
+            print query
 
             res = db.executeQuery(query)
             if res != 0:
@@ -197,6 +209,10 @@ def BackToMenuFromPutSalaryAll():
 def openSelectAllEmplyers():
     frameMenu.pack_forget()
     frameSelectAllEmplpoyers.pack()
+
+    show = selectQuery("//treballador")
+    lbl_EmployersLists.delete('1.0', tk.END)
+    lbl_EmployersLists.insert('1.0', show)
 
 
 def BackToMenuFromSelectAllEmployers():
@@ -250,7 +266,8 @@ def leaveGame():
 
 # MENU PRINCIPAL
 window = tk.Tk()
-window.geometry("700x300")
+window.title('BayoTreballadors')
+destacat = tk.BooleanVar()
 frameMenu = tk.Frame(window)
 frameMenu.pack()
 
@@ -304,7 +321,7 @@ lbl_resultatSalaryUpdate = tk.Label(frameUpdateSalary,
                       foreground="black",
                       )
 buttonSalaryUpdateEmployersAction = tk.Button(frameUpdateSalary,
-                                     text="Afeguir Treballador",
+                                     text="Modificar Salary",
                                      command=SalaryUpdateEmployersAction)
 lbl_Dni.pack(pady="10")
 ent_Dni.pack(pady="5")
@@ -337,7 +354,7 @@ lbl_resultatSalary = tk.Label(framePutSalaryAll,
                       )
 
 buttonSalaryEmployersAction = tk.Button(framePutSalaryAll,
-                                     text="Afeguir Treballador",
+                                     text="Afeguir Salary",
                                      command=SalaryEmployersAction)
 
 
@@ -358,7 +375,8 @@ frameSelectAllEmplpoyers = tk.Frame(window)
 
 buttonBackToMenuFromSelectEmployers = tk.Button(frameSelectAllEmplpoyers,
                                                 text="Menu principal",
-                                                command=BackToMenuFromSelectAllEmployers)
+                                                command=BackToMenuFromSelectAllEmployers,
+                                                )
 lbl_EmployersLists = tk.Text(master=frameSelectAllEmplpoyers,
                       foreground="black",
                       background="white",
@@ -376,21 +394,23 @@ lbl_Dni = tk.Label(frameSelectEmplpoyers,
                    foreground="black",
                    background="white smoke"
                    )
-ent_Dni = tk.Entry(frameSelectEmplpoyers, bg="white", width="50")
+ent_DniShow = tk.Entry(frameSelectEmplpoyers, bg="white", width="50")
 
 buttonBackToMenuFromSelectEmployers = tk.Button(frameSelectEmplpoyers,
                                                 text="Menu principal",
                                                 command=BackToMenuFromSelectEmployers)
-lbl_resultatShow = tk.Label(frameSelectEmplpoyers,
+lbl_resultatShow = tk.Text(frameSelectEmplpoyers,
+                        height="20",
+                       width="40",
                       foreground="black",
                       )
 
 buttonShowEmployersAction = tk.Button(frameSelectEmplpoyers,
-                                     text="Afeguir Treballador",
+                                     text="Mostrar Treabllador",
                                      command=ShowEmployersAction)
 
 lbl_Dni.pack(pady="10")
-ent_Dni.pack(pady="5")
+ent_DniShow.pack(pady="5")
 lbl_resultatShow.pack()
 buttonShowEmployersAction.pack()
 buttonBackToMenuFromSelectEmployers.pack(pady="15")
@@ -405,7 +425,53 @@ lbl_Dni = tk.Label(frameUpdateEmplpoyers,
                    foreground="black",
                    background="white smoke"
                    )
-ent_Dni = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
+ent_DniModifi = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
+
+lbl_Department = tk.Label(frameUpdateEmplpoyers,
+                          text="Departament: ",
+                          foreground="black",
+                          background="white smoke"
+                          )
+
+ent_DepartmentModifi = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
+
+
+lbl_Name = tk.Label(frameUpdateEmplpoyers,
+                    text="Nom: ",
+                    foreground="black",
+                    background="white smoke"
+                    )
+ent_NameModifi = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
+
+
+lbl_Surname = tk.Label(frameUpdateEmplpoyers,
+                       text="Cognom: ",
+                       foreground="black",
+                       background="white smoke"
+                       )
+ent_SurnameModifi = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
+
+lbl_TelefonNumber = tk.Label(frameUpdateEmplpoyers,
+                             text="Numero de telefon: ",
+                             foreground="black",
+                             background="white smoke"
+                             )
+ent_TelefonNumberModifi = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
+
+
+lbl_Mail = tk.Label(frameUpdateEmplpoyers,
+                    text="Mail: ",
+                    foreground="black",
+                    background="white smoke"
+                    )
+ent_MailModifi = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
+
+lbl_Salary = tk.Label(frameUpdateEmplpoyers,
+                      text="Sou: ",
+                      foreground="black",
+                      background="white smoke"
+                      )
+ent_SalaryModifi = tk.Entry(frameUpdateEmplpoyers, bg="white", width="50")
 
 buttonBackToMenuFromUpdateEmployers = tk.Button(frameUpdateEmplpoyers,
                                                 text="Menu principal",
@@ -416,14 +482,35 @@ lbl_resultatUpdate = tk.Label(frameUpdateEmplpoyers,
                       )
 
 buttonUpdateEmployersAction = tk.Button(frameUpdateEmplpoyers,
-                                     text="Afeguir Treballador",
+                                     text="Modificar Treballador",
                                      command=UpdateEmployersAction)
-lbl_Dni.pack(pady="10")
-ent_Dni.pack(pady="5")
-lbl_resultatUpdate.pack()
-buttonUpdateEmployersAction.pack()
-buttonBackToMenuFromUpdateEmployers.pack(pady="15")
 
+
+
+lbl_Department.grid(column=0, row=1)
+ent_DepartmentModifi.grid(column=1, row=1)
+
+lbl_Dni.grid(column=0, row=2)
+ent_DniModifi.grid(column=1, row=2)
+
+lbl_Name.grid(column=0, row=3)
+ent_NameModifi.grid(column=1, row=3)
+
+lbl_Surname.grid(column=0, row=4)
+ent_SurnameModifi.grid(column=1, row=4)
+
+lbl_TelefonNumber.grid(column=0, row=5)
+ent_TelefonNumberModifi.grid(column=1, row=5)
+
+lbl_Mail.grid(column=0, row=6)
+ent_MailModifi.grid(column=1, row=6)
+
+lbl_Salary.grid(column=0, row=7)
+ent_SalaryModifi.grid(column=1, row=7)
+
+lbl_resultatUpdate.grid(column=1, row=8)
+buttonUpdateEmployersAction.grid(column=1, row=9, pady=5)
+buttonBackToMenuFromUpdateEmployers.grid(column=0, row=9, pady=5)
 
 
 # ELIMINAR TREBALLADORS
@@ -444,7 +531,7 @@ lbl_resultatDelete = tk.Label(frameDeleteEmployers,
                       )
 
 buttonDeleteEmployersAction = tk.Button(frameDeleteEmployers,
-                                     text="Afeguir Treballador",
+                                     text="Eliminar Treballador",
                                      command=deleteEmployersAction)
 
 lbl_Dni.pack(pady="10")
